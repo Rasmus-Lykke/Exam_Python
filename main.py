@@ -4,11 +4,13 @@ from PIL import Image, ImageDraw
 import time
 import zoom_levels
 
-
-from numpy           import linspace, reshape
-from matplotlib      import pyplot
+import sys
+import math
+from numba import jit
+from itertools import repeat
 from multiprocessing import Pool
 
+times = {} # Dictionary for holding the times
 width, height = 800, 800 # The size of the image created in pixels
 zoom_level, file_name = mandelbrot_setup.userInput()
 
@@ -34,11 +36,11 @@ def mandelbrot_native():
     draw = ImageDraw.Draw(image)
 
     """ Iterating through each pixel in the image"""
-    for x in range(width):
-        for y in range(height):
+    for ix in range(width):
+        for iy in range(height):
             # Convert pixel coordinate to complex number
-            coordinate = complex(x_min + (x / width) * (x_max - x_min),
-                                y_min + (y / height) * (y_max - y_min))
+            coordinate = complex(x_min + (ix / width) * (x_max - x_min),
+                                y_min + (iy / height) * (y_max - y_min))
 
             
             # Compute the number of iterations
@@ -66,7 +68,7 @@ def mandelbrot_native():
             
             # Plot the point
             #draw.point([x, y], (int(color[0]), int(color[1]), int(color[2])))
-            draw.point([x, y], (hue, saturation, value))
+            draw.point([ix, iy], (hue, saturation, value))
 
 
     return image.convert('RGB');
@@ -96,8 +98,6 @@ def mandelbrot_numpy():
             # The color depends on the number of iterations
             
             color = ()
-
-            
             v = 765 * i / max_iter
             if v > 510:
                 color = (255, 255, v%255)
@@ -105,14 +105,6 @@ def mandelbrot_numpy():
                 color = (255, v%255, 0)
             else:
                 color = (v%255, 0, 0)
-
-            """
-            v = 765 * i / max_iter
-            hue = int(v % 255)
-            saturation = v % 255
-            value = 255 if v < max_iter else abs(i % 256 * 1.5)
-            """
-            
                 
             M[N & (abs(Z) > 2)] = color # Updateing the M matrix if the absolute value is bigger than 2 set the hue
         return M
@@ -139,46 +131,71 @@ def _rotate_image(image):
     return x
 
 
+def mandelbrot_multiprocessing():
+    @jit
+    def get_col(args):
+        iy, width, height, max_iter = args
+        result = np.zeros((1, width))    
+        for ix in np.arange(width):
+
+            x0 = x_min + (ix / width) * (x_max - x_min)
+            y0 = y_min + (iy / height) * (y_max - y_min)
+            
+            x = 0.0
+            y = 0.0
+            
+            for i in range(max_iter):
+                x_new = x * x - y * y + x0
+                y = 2 * x * y + y0
+                x = x_new
+
+                if x*x + y*y > 4.0:
+                    # color using pretty linear gradient
+                    # The color depends on the number of iterations
+                    hue = int(255 * i / max_iter)
+                    saturation = 255
+                    value = 255 if i < max_iter else 0
+
+                    break
+                else:
+                    # failed, set color to black
+                    hue = 0.0
+           
+            result[0, ix] = hue
+
+        return result
+     
+    result = np.zeros((height, width))
+    pool = Pool(4) # Number of processes
+    iy = np.arange(height)
+    mandelbrot = pool.map_async(get_col, zip(iy, repeat(width), repeat(height), repeat(max_iter) )).get()
+
+    for ix in np.arange(height):
+        result[ix,:] = mandelbrot[ix]
+
+    mandelbrot = result
+    mandelbrot = np.clip(mandelbrot*255, 0, 255).astype(np.uint8)
+    mandelbrot = Image.fromarray(mandelbrot)
+
+    return mandelbrot
+    
+
 def get_mandelbrot(render_engine):
     image = render_engine()
     image.save(file_name + render_engine.__name__[10:] + ".png", "PNG") # Saves the image to the current directory
 
+def time_statestics():
+    print(f'Native:           {str(times.get(mandelbrot_native.__name__))[:6]} sec.')
+    print(f'Numpy:            {str(times.get(mandelbrot_numpy.__name__))[:6]} sec.  -Time difference: {str(times.get(mandelbrot_numpy.__name__) - times.get(mandelbrot_native.__name__))[:6]} sec.')
+    print(f'Multiprocessing:  {str(times.get(mandelbrot_multiprocessing.__name__))[:6]} sec.  -Time difference: {str(times.get(mandelbrot_multiprocessing.__name__) - times.get(mandelbrot_numpy.__name__))[:6]} sec.')
+ 
 
-
-def mandelbrot_multiprocessing():
-    def mandelbrot(z): # computation for one pixel
-        c = z
-        for n in range(max_iter):
-            if abs(z)>2: return n  # divergence test
-            z = z*z + c
-        return max_iter
-
-    X = linspace(x_min,x_max,width) # lists of x and y
-    Y = linspace(y_min,y_max,height) # pixel co-ordinates
-
-    # main loops
-    p = Pool()
-    Z = [complex(x,y) for y in Y for x in X]
-    N = p.map(mandelbrot,Z)
-
-    N = reshape(N, (width,height)) # change to rectangular array
-
-    pyplot.imshow(N) # plot the image
-    pyplot.show()
-
-
-times = {}
-for re in [mandelbrot_multiprocessing]:
+for re in [mandelbrot_native, mandelbrot_numpy, mandelbrot_multiprocessing]:
     start = time.time()
     get_mandelbrot(re)
     end = time.time()
 
     times[re.__name__] = end - start
-
-def time_statestics():
-    print(times.get(mandelbrot_native.__name__))
-    print(times.get(mandelbrot_numpy.__name__))
-    print(times.get(mandelbrot_multiprocessing.__name__))
 
 time_statestics()
 
