@@ -3,21 +3,21 @@ original = {
     "x_max": 0.75,
     "y_min": -1.5,
     "y_max": 1.5,
-    "max_iter": 250
+    "max_iter": 100
 }
 first_level = {
     "x_min": -1.6875,
     "x_max": -0.5625,
     "y_min": -0.5,
     "y_max": 0.5,
-    "max_iter": 500
+    "max_iter": 250
 }
 second_level = {
     "x_min": -0.22,
     "x_max": -0.21,
     "y_min": -0.70 * 1.12,
     "y_max": -0.69 * 1.12,
-    "max_iter": 1000
+    "max_iter": 500
 }
 third_level = {
     "x_min": -0.22,
@@ -31,14 +31,14 @@ fourth_level = {
     "x_max": -0.19,
     "y_min": -0.68,
     "y_max": -0.67,
-    "max_iter": 1000
+    "max_iter": 2000
 }
 fifth_level = {
     "x_min": -0.20,
     "x_max": -0.195,
     "y_min": -0.68,
     "y_max": -0.675,
-    "max_iter": 1000
+    "max_iter": 3000
 }
 
-zoom_list = (original, first_level, second_level, third_level, fourth_level, fifth_level) # Add the dictionaries tho the zoom_list tuple
+zoom_list = (original, first_level, second_level, third_level, fourth_level, fifth_level) # Appending the dictionaries tho the zoom_list tuple
