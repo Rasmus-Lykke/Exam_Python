@@ -6,15 +6,15 @@ import zoom_levels
 
 from numba import jit
 from itertools import repeat
-from multiprocessing import Pool # For parallel execution of a function
+from multiprocessing import Pool  # For parallel execution of a function
 
 times = {}  # Dictionary for holding the times
 width, height = 800, 800  # The size of the image created in pixels
-zoom_level, file_name = mandelbrot_setup.userInput()
+zoom_level, file_name = mandelbrot_setup.user_input()
 
 max_iter = zoom_levels.zoom_list[zoom_level]["max_iter"]
-# Plot window // Adjust this for panning and zooming // Imaginary and Real parts
-# Below is the 'Size' of the coordinate system, decreasing theese will zoom into the coordinatesystem
+s
+# Below is the 'Size' of the coordinate system, decreasing these will zoom into the coordinate system
 x_min = zoom_levels.zoom_list[zoom_level]["x_min"]
 x_max = zoom_levels.zoom_list[zoom_level]["x_max"]
 y_min = zoom_levels.zoom_list[zoom_level]["y_min"]
@@ -33,7 +33,7 @@ def mandelbrot_naive():
     image = Image.new('HSV', (width, width), (0, 0, 0))
     draw = ImageDraw.Draw(image)
 
-    """ Iterating through each pixel in the image"""
+    # Iterating through each pixel in the image
     for ix in range(width):
         for iy in range(height):
             # Convert pixel coordinate to complex number
@@ -60,7 +60,7 @@ def mandelbrot_numpy():
 
         C = np.zeros((width, height), dtype=np.complex_)
         Z = np.zeros((width, height), dtype=np.complex_)
-        M = np.zeros((width, height, 3), dtype=np.uint8)
+        result = np.zeros((width, height, 3), dtype=np.uint8)
 
         # Looping through each pixel given by the height and width variables
         for cx in range(width):
@@ -83,8 +83,8 @@ def mandelbrot_numpy():
             else:
                 color = (v % 255, 0, 0)
 
-            M[N & (abs(Z) > 2)] = color  # Updating the M matrix if the absolute value is bigger than 2 set the hue
-        return M
+            result[N & (abs(Z) > 2)] = color  # Updating the M matrix if the absolute value is bigger than 2 set the hue
+        return result
 
     M = create_mandelbrot()
 
@@ -109,7 +109,7 @@ def _rotate_image(image):
 
 
 def mandelbrot_multiprocessing():
-    @jit
+    @jit  # Using Numba to translate the function to optimized machine code at runtime this avoids the pickle error
     def get_col(args):
         iy, width, height = args
         result = np.zeros((1, width, 3))
@@ -126,7 +126,7 @@ def mandelbrot_multiprocessing():
                 y = 2 * x * y + y0
                 x = x_new
 
-                if abs(x_new) > 2:
+                if abs(x) > 2:
                     # The color depends on the number of iterations
                     v = 765 * i / max_iter
                     if v > 510:
@@ -155,6 +155,7 @@ def mandelbrot_multiprocessing():
     return mandelbrot
 
 
+# Used for representing the time difference between the three functions
 def time_statistics():
     time_naive = times.get(mandelbrot_naive.__name__)
     time_numpy = times.get(mandelbrot_numpy.__name__)
@@ -177,9 +178,10 @@ def get_mandelbrot(render_engine):
     image.save(file_name + render_engine.__name__[10:] + ".png", "PNG")  # Saves the image to the current directory
 
 
+# Looping through the three rendering engines and pases the functions to the get_mandelbrot function
 for re in [mandelbrot_naive, mandelbrot_numpy, mandelbrot_multiprocessing]:
     start = time.time()
-    get_mandelbrot(re) # Calls the function and parses the rendering_engine as a parameter
+    get_mandelbrot(re)  # Calls the function and parses the rendering_engine as a parameter
     end = time.time()
 
     times[re.__name__] = end - start
