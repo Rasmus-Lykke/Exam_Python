@@ -15,11 +15,13 @@ from numba import jit
 from itertools import repeat
 from multiprocessing import Pool  # For parallel execution of a function
 
-processes = 4
+processes = 4  # Change this to alter the performance og the multiprocessing function.
+# For me 4 is the optimal with 6 processing cores
 
 times = {}  # Dictionary for holding the times
 width, height = 800, 800  # The size of the image created in pixels
-zoom_level, file_name = mandelbrot_setup.user_input()
+zoom_level, file_name = mandelbrot_setup.user_input()  # Calling the user_input() function the in setup file and
+# assigning the variables to the return values.
 
 max_iter = zoom_levels.zoom_list[zoom_level]["max_iter"]
 
@@ -104,19 +106,6 @@ def mandelbrot_numpy():
     return rotated_image
 
 
-def _rotate_image(image):
-    # Rotate the image with expand=True, which makes the canvas
-    # large enough to contain the entire rotated image.
-    x = image.rotate(90, expand=True)
-
-    # crop the rotated image to the size of the original image
-    x = x.crop(box=(x.size[0] / 2 - image.size[0] / 2,
-                    x.size[1] / 2 - image.size[1] / 2,
-                    x.size[0] / 2 + image.size[0] / 2,
-                    x.size[1] / 2 + image.size[1] / 2))
-    return x
-
-
 def mandelbrot_multiprocessing():
     @jit  # Using Numba to translate the function to optimized machine code at runtime this avoids the pickle error
     def get_col(args):
@@ -164,7 +153,21 @@ def mandelbrot_multiprocessing():
     return mandelbrot
 
 
-# Used for representing the time difference between the three functions
+""" Used for rotating the numpy image and cropping to avoid a wide and low image """
+def _rotate_image(image):
+    # Rotate the image with expand=True, which makes the canvas
+    # large enough to contain the entire rotated image.
+    x = image.rotate(90, expand=True)
+
+    # crop the rotated image to the size of the original image
+    x = x.crop(box=(x.size[0] / 2 - image.size[0] / 2,
+                    x.size[1] / 2 - image.size[1] / 2,
+                    x.size[0] / 2 + image.size[0] / 2,
+                    x.size[1] / 2 + image.size[1] / 2))
+    return x
+
+
+""" Used for representing the time difference between the three functions """
 def time_statistics():
     time_naive = times.get(mandelbrot_naive.__name__)
     time_numpy = times.get(mandelbrot_numpy.__name__)
@@ -181,13 +184,15 @@ def time_statistics():
           f'| {str(((time_numpy - time_multiprocessing) / ((time_numpy + time_multiprocessing) / 2)) * 100)[:5]} %')
 
 
+""" High order function which takes a rendering_engine as is parameter and saves the image created by the rendering engine """
 def get_mandelbrot(render_engine):  # Higher order function because it takes a function as a parameter.
     # Calls the function parsed in the parameter and assigns the variable "image" to the return value
     image = render_engine()
     image.save(file_name + render_engine.__name__[10:] + ".png", "PNG")  # Saves the image to the current directory
+    print(f'File: {render_engine.__name__} saved')
 
 
-# Looping through the three rendering engines and pases the functions to the get_mandelbrot function
+""" Looping through the three rendering engines and pases the functions to the get_mandelbrot function """
 for re in [mandelbrot_naive, mandelbrot_numpy, mandelbrot_multiprocessing]:
     start = time.time()
     get_mandelbrot(re)  # Calls the function and parses the rendering_engine as a parameter
