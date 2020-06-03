@@ -100,7 +100,7 @@ def mandelbrot_numpy():
     image = Image.fromarray(M, "RGB")  # Creating the image from the "M"
 
     rotated_image = _rotate_image(image)
-    rotated_image.save(file_name + '_numpy.png', 'PNG')  # Saves the image to the current director
+    rotated_image.save(file_name + '_numpy.png', 'PNG')  # Saves the image to the current directory
     return rotated_image
 
 
@@ -181,8 +181,8 @@ def time_statistics():
           f'| {str(((time_numpy - time_multiprocessing) / ((time_numpy + time_multiprocessing) / 2)) * 100)[:5]} %')
 
 
-def get_mandelbrot(render_engine):
-    # Calls the function parsed in the parameter and assigns the return value to the variable "image"
+def get_mandelbrot(render_engine):  # Higher order function because it takes a function as a parameter.
+    # Calls the function parsed in the parameter and assigns the variable "image" to the return value
     image = render_engine()
     image.save(file_name + render_engine.__name__[10:] + ".png", "PNG")  # Saves the image to the current directory
 
