@@ -1,3 +1,10 @@
+"""
+    A program which constructs three implementations of the mandelbrot set.
+    The user needs just to have the required imports installed.
+    Then the user have the option of defining the number of processes to be used doing the multiprocessing part.
+    Otherwise you just have to initiate the program in the terminal and then following the two steps.
+"""
+
 import mandelbrot_setup
 import numpy as np
 from PIL import Image, ImageDraw
@@ -8,12 +15,14 @@ from numba import jit
 from itertools import repeat
 from multiprocessing import Pool  # For parallel execution of a function
 
+processes = 4
+
 times = {}  # Dictionary for holding the times
 width, height = 800, 800  # The size of the image created in pixels
 zoom_level, file_name = mandelbrot_setup.user_input()
 
 max_iter = zoom_levels.zoom_list[zoom_level]["max_iter"]
-s
+
 # Below is the 'Size' of the coordinate system, decreasing these will zoom into the coordinate system
 x_min = zoom_levels.zoom_list[zoom_level]["x_min"]
 x_max = zoom_levels.zoom_list[zoom_level]["x_max"]
@@ -141,7 +150,7 @@ def mandelbrot_multiprocessing():
         return result
 
     result = np.zeros((height, width, 3), dtype=np.uint8)
-    pool = Pool(4)  # 4 = Number of processes
+    pool = Pool(processes)  # 4 = Number of processes
     iy = np.arange(height)
     mandelbrot = pool.map_async(get_col, zip(iy, repeat(width), repeat(height))).get()
 
