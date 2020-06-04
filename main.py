@@ -67,6 +67,7 @@ def mandelbrot_naive():
 
 def mandelbrot_numpy():
     def create_mandelbrot():
+        """ Lambda function / anonymous function which calculates the cmap """
         cmap = lambda value, v_min, v_max, p_min, p_max: p_min + (p_max - p_min) * ((value - v_min) / (v_max - v_min))
 
         C = np.zeros((width, height), dtype=np.complex_)
@@ -139,8 +140,9 @@ def mandelbrot_multiprocessing():
         return result
 
     result = np.zeros((height, width, 3), dtype=np.uint8)
-    pool = Pool(processes)  # 4 = Number of processes
     iy = np.arange(height)
+
+    pool = Pool(processes)  # 4 = Number of processes
     mandelbrot = pool.map_async(get_col, zip(iy, repeat(width), repeat(height))).get()
 
     for ix in np.arange(height):
@@ -153,8 +155,10 @@ def mandelbrot_multiprocessing():
     return mandelbrot
 
 
-""" Used for rotating the numpy image and cropping to avoid a wide and low image """
 def _rotate_image(image):
+    """ Used for rotating the numpy image and cropping to avoid a wide and low image.
+    The function is found online but i have lost the source"""
+
     # Rotate the image with expand=True, which makes the canvas
     # large enough to contain the entire rotated image.
     x = image.rotate(90, expand=True)
@@ -167,8 +171,28 @@ def _rotate_image(image):
     return x
 
 
-""" Used for representing the time difference between the three functions """
+def timer(represent):
+    """ Decorator function """
+    def wrapper():
+        """ Looping through the three rendering engines and passes the functions to the get_mandelbrot function and
+        then calling the timer_statistics function fore a representation of the time difference"""
+        for re in [mandelbrot_naive, mandelbrot_numpy, mandelbrot_multiprocessing]:
+            start = time.time()
+            get_mandelbrot(re)  # Calls the function and parses the rendering_engine as a parameter
+            end = time.time()
+
+            times[re.__name__] = end - start
+
+        represent()  # Time statistics function
+
+        print("Done!")
+
+    return wrapper
+
+
+@timer
 def time_statistics():
+    """ Used for representing the time difference between the three functions """
     time_naive = times.get(mandelbrot_naive.__name__)
     time_numpy = times.get(mandelbrot_numpy.__name__)
     time_multiprocessing = times.get(mandelbrot_multiprocessing.__name__)
@@ -184,20 +208,13 @@ def time_statistics():
           f'| {str(((time_numpy - time_multiprocessing) / ((time_numpy + time_multiprocessing) / 2)) * 100)[:5]} %')
 
 
-""" High order function which takes a rendering_engine as is parameter and saves the image created by the rendering engine """
-def get_mandelbrot(render_engine):  # Higher order function because it takes a function as a parameter.
+def get_mandelbrot(render_engine):
+    """ High order function which takes a rendering_engine as is parameter and saves the image created by the
+    rendering engine """
     # Calls the function parsed in the parameter and assigns the variable "image" to the return value
     image = render_engine()
     image.save(file_name + render_engine.__name__[10:] + ".png", "PNG")  # Saves the image to the current directory
     print(f'File: {render_engine.__name__} saved')
 
-
-""" Looping through the three rendering engines and pases the functions to the get_mandelbrot function """
-for re in [mandelbrot_naive, mandelbrot_numpy, mandelbrot_multiprocessing]:
-    start = time.time()
-    get_mandelbrot(re)  # Calls the function and parses the rendering_engine as a parameter
-    end = time.time()
-
-    times[re.__name__] = end - start
 
 time_statistics()
