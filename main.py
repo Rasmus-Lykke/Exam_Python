@@ -106,7 +106,8 @@ def mandelbrot_numpy():
     rotated_image.save(file_name + '_numpy.png', 'PNG')  # Saves the image to the current directory
     return rotated_image
 
-
+""" This code is mainly found from the following link and are thereafter fitted to the rest of the program 
+https://medium.com/convergence-tech/visualize-the-mandelbrot-set-in-gigapixels-python-15e4ad459925 """
 def mandelbrot_multiprocessing():
     @jit  # Using Numba to translate the function to optimized machine code at runtime this avoids the pickle error
     def get_col(args):
