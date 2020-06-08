@@ -6,10 +6,11 @@
 """
 
 import mandelbrot_setup
+import zoom_levels
+
 import numpy as np
 from PIL import Image, ImageDraw
 import time
-import zoom_levels
 
 from numba import jit
 from itertools import repeat
@@ -145,6 +146,8 @@ def mandelbrot_multiprocessing():
 
     pool = Pool(processes)  # 4 = Number of processes
     mandelbrot = pool.map_async(get_col, zip(iy, repeat(width), repeat(height))).get()
+    pool.close()
+    pool.join()
 
     for ix in np.arange(height):
         result[ix, :] = mandelbrot[ix]
@@ -198,14 +201,16 @@ def time_statistics():
     time_numpy = times.get(mandelbrot_numpy.__name__)
     time_multiprocessing = times.get(mandelbrot_multiprocessing.__name__)
 
+    print()
+
     print(f'Naive:            {str(time_naive)[:6]} sec.')
 
     print(f'Numpy:            {str(time_numpy)[:6]} sec. '
-          f'-Time difference: {str(time_numpy - time_naive)[:6]} sec. '
+          f'| Time difference: {str(time_numpy - time_naive)[:6]} sec. '
           f'| {str(((time_naive - time_numpy) / ((time_naive + time_numpy) / 2)) * 100)[:5]} % ')
 
     print(f'Multiprocessing:  {str(time_multiprocessing)[:6]} sec. '
-          f'-Time difference: {str(time_multiprocessing - time_numpy)[:6]} sec. '
+          f'| Time difference: {str(time_multiprocessing - time_numpy)[:6]} sec. '
           f'| {str(((time_numpy - time_multiprocessing) / ((time_numpy + time_multiprocessing) / 2)) * 100)[:5]} %')
 
 
