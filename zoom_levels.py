@@ -17,7 +17,7 @@ second_level = {
     "x_max": -0.21,
     "y_min": -0.70 * 1.12,
     "y_max": -0.69 * 1.12,
-    "max_iter": 500
+    "max_iter": 250
 }
 third_level = {
     "x_min": -0.22,

@@ -2,7 +2,7 @@
     A program which constructs three implementations of the mandelbrot set.
     The user needs just to have the required imports installed.
     Then the user have the option of defining the number of processes to be used doing the multiprocessing part.
-    Otherwise you just have to initiate the program in the terminal and then following the two steps.
+    Otherwise you just have to initiate the program in the terminal and then follow the two steps.
 """
 
 import mandelbrot_setup
@@ -107,9 +107,13 @@ def mandelbrot_numpy():
     rotated_image.save(file_name + '_numpy.png', 'PNG')  # Saves the image to the current directory
     return rotated_image
 
-""" This code is mainly found from the following link and are thereafter fitted to the rest of the program 
-https://medium.com/convergence-tech/visualize-the-mandelbrot-set-in-gigapixels-python-15e4ad459925 """
+
+
+
+
 def mandelbrot_multiprocessing():
+    """ This code is mainly found from the following link and are thereafter fitted to the rest of the program
+    https://medium.com/convergence-tech/visualize-the-mandelbrot-set-in-gigapixels-python-15e4ad459925 """
     @jit  # Using Numba to translate the function to optimized machine code at runtime this avoids the pickle error
     def get_col(args):
         iy, width, height = args
@@ -145,7 +149,7 @@ def mandelbrot_multiprocessing():
     iy = np.arange(height)
 
     pool = Pool(processes)  # 4 = Number of processes
-    mandelbrot = pool.map_async(get_col, zip(iy, repeat(width), repeat(height))).get()
+    mandelbrot = pool.map(get_col, zip(iy, repeat(width), repeat(height)))
     pool.close()
     pool.join()
 
@@ -177,6 +181,7 @@ def _rotate_image(image):
 
 def timer(represent):
     """ Decorator function """
+
     def wrapper():
         """ Looping through the three rendering engines and passes the functions to the get_mandelbrot function and
         then calling the timer_statistics function fore a representation of the time difference"""
@@ -201,9 +206,7 @@ def time_statistics():
     time_numpy = times.get(mandelbrot_numpy.__name__)
     time_multiprocessing = times.get(mandelbrot_multiprocessing.__name__)
 
-    print()
-
-    print(f'Naive:            {str(time_naive)[:6]} sec.')
+    print(f'\nNaive:            {str(time_naive)[:6]} sec.')
 
     print(f'Numpy:            {str(time_numpy)[:6]} sec. '
           f'| Time difference: {str(time_numpy - time_naive)[:6]} sec. '
@@ -217,10 +220,10 @@ def time_statistics():
 def get_mandelbrot(render_engine):
     """ High order function which takes a rendering_engine as is parameter and saves the image created by the
     rendering engine """
-    # Calls the function parsed in the parameter and assigns the variable "image" to the return value
     image = render_engine()
     image.save(file_name + render_engine.__name__[10:] + ".png", "PNG")  # Saves the image to the current directory
     print(f'File: {render_engine.__name__} saved')
 
 
+# statistics = timer(time_statistics)
 time_statistics()
